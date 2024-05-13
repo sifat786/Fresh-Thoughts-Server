@@ -8,7 +8,7 @@ const port = process.env.PORT || 5000;
 
 //* Middleware:
 app.use(cors({
-    origin: ['http://localhost:5173', 'http://localhost:5174'],
+    origin: ['http://localhost:5173', 'http://localhost:5174', 'https://fresh-thoughts-12a68.web.app'],
     credentials: true,
     optionsSuccessStatus: 200
 }));
@@ -32,8 +32,9 @@ async function run() {
   try {
 
     const blogCollection = client.db("freshThoughts").collection("blogs");
+    const commentCollection = client.db("freshThoughts").collection("comments");
 
-    //**  **/
+    //** blog related api **/
     //! GET
     app.get('/blogs', async(req, res) => {
         const result = await blogCollection.find().toArray();
@@ -45,6 +46,29 @@ async function run() {
         const result = await blogCollection.findOne(query);
         res.send(result);
     })
+
+    //** comment related api **/
+    //! GET
+    app.get('/comments', async(req, res) => {
+      const result = await commentCollection.find().toArray();
+      res.send(result);
+    })
+
+    app.get('/comments/:blogId', async(req, res) => {
+      const query = { blogId: req.params.blogId };
+      const result = await commentCollection.find(query).toArray();
+      res.send(result);
+    });
+    
+
+    //! POST
+    app.post('/comments', async(req, res) => {
+      const result = await commentCollection.insertOne(req.body);
+      res.send(result);
+    })
+
+
+
 
 
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
