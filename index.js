@@ -34,7 +34,7 @@ async function run() {
     const blogCollection = client.db("freshThoughts").collection("blogs");
     const commentCollection = client.db("freshThoughts").collection("comments");
 
-    //** blog related api **/
+    //! ** blog related api **/
     //! GET
     app.get('/blogs', async(req, res) => {
         const result = await blogCollection.find().toArray();
@@ -47,8 +47,37 @@ async function run() {
         res.send(result);
     })
 
+    //! POST
+    app.post('/blogs', async(req, res) => {
+      const result = await blogCollection.insertOne(req.body);
+      res.send(result);
+    })
+
+    //! PUT
+    app.put('/blogs/:id', async(req, res) => {
+      const blog = req.body;
+      const filter = {_id: new ObjectId(req.params.id)};
+      const options = { upsert: true };
+
+      const updatedBlog = {
+        $set: {
+          title: blog.title,
+          category: blog.category,
+          image: blog.image,
+          short_description: blog.short_description,
+          long_description: blog.long_description
+        }
+      }
+      const result = await blogCollection.updateOne(filter, updatedBlog, options);
+      res.send(result);
+    }) 
+
+
+
+
+
     //** comment related api **/
-    //! GET
+    //* GET
     app.get('/comments', async(req, res) => {
       const result = await commentCollection.find().toArray();
       res.send(result);
@@ -59,9 +88,10 @@ async function run() {
       const result = await commentCollection.find(query).toArray();
       res.send(result);
     });
-    
 
-    //! POST
+
+
+    //* POST
     app.post('/comments', async(req, res) => {
       const result = await commentCollection.insertOne(req.body);
       res.send(result);
