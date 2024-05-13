@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
 
@@ -8,11 +9,19 @@ const port = process.env.PORT || 5000;
 
 //* Middleware:
 app.use(cors({
-    origin: ['http://localhost:5173', 'http://localhost:5174', 'https://fresh-thoughts-12a68.web.app'],
+    origin: [
+      'http://localhost:5173', 'http://localhost:5174', 'https://fresh-thoughts-12a68.web.app', 'https://fresh-thoughts-12a68.firebaseapp.com'
+    ],
     credentials: true,
     optionsSuccessStatus: 200
 }));
 app.use(express.json());
+
+const cookieOptions = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+};
 
 
 // ///TODO: MondoDB:
@@ -33,6 +42,16 @@ async function run() {
 
     const blogCollection = client.db("freshThoughts").collection("blogs");
     const commentCollection = client.db("freshThoughts").collection("comments");
+
+    // TODO: JWT Generate :
+    app.post('/jwt', async(req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '365d'})
+      
+      res.cookie('token', token, cookieOptions).send({success: true});
+    })
+
+
 
     //! ** blog related api **/
     //! GET
