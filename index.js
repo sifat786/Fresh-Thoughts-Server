@@ -51,6 +51,14 @@ async function run() {
       res.cookie('token', token, cookieOptions).send({success: true});
     })
 
+    //clearing Token
+    app.post("/logout", async (req, res) => {
+      const user = req.body;
+      console.log("logging out", user);
+      res
+        .clearCookie("token", { ...cookieOptions, maxAge: 0 })
+        .send({ success: true });
+    });
 
 
     //! ** blog related api **/
