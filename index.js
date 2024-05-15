@@ -27,10 +27,12 @@ const logger = (req, res, next) => {
 
 const verifyToken = (req, res, next) => {
   const token = req?.cookies?.token;
+  console.log(token);
   if (!token) {
-    return req.status(401).send({ message: 'unauthorized access' });
+    return res.status(401).send({ message: 'unauthorized access' });
   }
   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+    console.log(decoded);
     if (err) {
       return res.status(401).send({ message: 'unauthorized access' });
     }
@@ -90,10 +92,30 @@ async function run() {
 
     //! ** blog related api **/
     //! GET
-    app.get('/blogs', logger, async (req, res) => {
+    app.get('/blogs', logger,  async (req, res) => {
       const result = await blogCollection.find().toArray();
       res.send(result);
     })
+
+    app.get('/allBlogs', async(req, res) => {
+      const {search, category} = req.query;
+
+      const query = {};
+      if (category) {
+        query.category = {$regex: category, $options: 'i'};
+      }
+      if (search) {
+        query.title = { $regex: search, $options: 'i' };
+      }
+
+      const result = await blogCollection.find(query).toArray();
+      res.send(result);
+    })
+
+    app.get('/featuredBlogs', async(req, res) => {
+      const result = await blogCollection.find({}).sort({ "longDescription": -1 }).limit(10).toArray();
+      res.send(result);
+  });
 
     app.get('/blogs/:id', async (req, res) => {
       const query = { _id: new ObjectId(req.params.id) };
@@ -102,7 +124,10 @@ async function run() {
     })
 
     //! POST
-    app.post('/blogs', async (req, res) => {
+    app.post('/blogs', verifyToken, async (req, res) => {
+      if(req.user.email !== req.body.email) {
+        return res.status(403).send({message : 'forbidden access'});
+      }
       const result = await blogCollection.insertOne(req.body);
       res.send(result);
     })
@@ -127,9 +152,6 @@ async function run() {
     })
 
 
-
-
-
     //** comment related api **/
     //* GET
     app.get('/comments', async (req, res) => {
@@ -149,6 +171,7 @@ async function run() {
       res.send(result);
     })
 
+    
 
     //* ** wishlist related api **/
     //* GET
@@ -157,6 +180,11 @@ async function run() {
       res.send(result);
     });
 
+    app.get('/wishlistById/:id', async (req, res) => {
+      const cursor = wishlistCollection.find({ _id: new ObjectId(req.params.id) });
+      const result = await cursor.toArray();
+      res.send(result);
+    });
     app.get('/wishlist/:userId', async (req, res) => {
       const cursor = wishlistCollection.find({ userId: req.params.userId });
       const result = await cursor.toArray();
@@ -165,8 +193,8 @@ async function run() {
 
     //* POST 
     app.post('/wishlist/add', async (req, res) => {
-        const { blogId, userId, category, image, title, short_description, long_description } = req.body;
-        const result = await wishlistCollection.insertOne({ blogId, userId, category, image, title, short_description, long_description });
+        const { blogId, userId, name, email, profilePic, category, image, title, short_description, long_description } = req.body;
+        const result = await wishlistCollection.insertOne({ blogId, userId, name, email, profilePic, category, image, title, short_description, long_description });
         res.send(result);
     })
 
