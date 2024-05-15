@@ -11,7 +11,7 @@ const port = process.env.PORT || 5000;
 //* Middleware:
 app.use(cors({
   origin: [
-    'http://localhost:5173', 'http://localhost:5174', 'https://fresh-thoughts-12a68.web.app', 'https://fresh-thoughts-12a68.firebaseapp.com'
+    'http://localhost:5173', 'https://fresh-thoughts-12a68.web.app', 'https://fresh-thoughts-12a68.firebaseapp.com',
   ],
   credentials: true,
   optionsSuccessStatus: 200
@@ -75,9 +75,7 @@ async function run() {
       console.log("user for token", user);
       const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '365d' })
 
-      res
-        .cookie('token', token, cookieOptions)
-        .send({ success: true });
+      res.cookie('token', token, cookieOptions).send({ success: true });
     })
 
     // clearing Token
